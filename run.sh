@@ -1,0 +1,1 @@
+/Applications/Genesis\ Plus.app/Contents/MacOS/Genesis\ Plus out/rom.bin
