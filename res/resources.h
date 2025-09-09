@@ -10,7 +10,7 @@ extern const Image frameR;
 extern const Image frameT;
 extern const Image frameFade;
 extern const Image font;
-extern const SpriteDefinition fairySprite;
+extern const SpriteDefinition moonRabbitSprite;
 extern const Image startLogo;
 extern const Image startBg;
 extern const Image startBg2;

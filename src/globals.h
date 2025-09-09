@@ -78,6 +78,8 @@ u16 rollDice(){
 	return (random() % 6) + 1;
 }
 
+u16 clock;
+
 // player
 s16 cameraX, cameraY;
 struct playerStruct {
@@ -88,17 +90,20 @@ struct playerStruct {
 struct playerStruct player;
 
 // enemies
-#define ENEMY_COUNT 4
+#define ENEMY_COUNT 8
 u8 enemyCount;
 struct enemyStruct {
 	bool seen;
-	Vect2D_s16 pos, tilePos;
+	Vect2D_s16 pos, tilePos,
+		lastPos;
 	Sprite* image;
-	u8 hp, atk, def, wpn, arm, maxHp, lastDirection;
+	u8 hp, atk, def, wpn, arm, maxHp, lastDirection, type, moveCounter;
 };
 struct enemyStruct enemies[ENEMY_COUNT];
 void spawnEnemies();
 void updateEnemies();
+void bounceEnemies();
+s16 bounceOffset;
 
 // items
 #define ITEM_COUNT 8
@@ -129,3 +134,6 @@ bool isWalkable(s16 tileX, s16 tileY){
 			isWalkableCheck = FALSE;
 	return isWalkableCheck;
 }
+
+// log
+char logStr[18];

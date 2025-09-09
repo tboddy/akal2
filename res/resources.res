@@ -12,7 +12,7 @@ IMAGE frameFade "framefade.png" NONE NONE
 
 IMAGE font "font.png" NONE NONE
 
-SPRITE fairySprite "fairy.png" 2 2 FAST 8
+SPRITE moonRabbitSprite "moonrabbit.png" 2 2 FAST 0
 
 IMAGE startLogo "logo.png" NONE NONE
 IMAGE startBg "startbg.png" NONE NONE

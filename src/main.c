@@ -31,12 +31,18 @@ void loadGame(){
 	loadUi();
 	loadPlayer();
 	loadMap();
+	bounceOffset = 1;
   started = true;
 }
 
 void updateGame(){
 	if(levelTransitionClock > 0) updateLevelTransition();
-	else updatePlayer();
+	else{
+		updatePlayer();
+		bounceEnemies();
+	}
+	clock++;
+	if(clock >= 61440) clock = 60;
 }
 
 int main(bool hardReset) {

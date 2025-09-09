@@ -80,12 +80,19 @@ static void updateStats(){
 	// VDP_drawText(armStr, SIDEBAR_X + strLessTen(player.arm), SIDEBAR_Y + 7);
 }
 
+char logStrCurrent[18];
+char logStrPrevious[18];
 static void updateLog(){
-	// VDP_setTextPalette(PAL1);
-	// VDP_drawText("FAIRY MISS", 8, 25 - 2);
-	// VDP_drawText("HIT FAIRY-2HP", 8, 25 - 1);
-	// VDP_setTextPalette(PAL0);
-	VDP_drawText("LONG-EGG.COM", 8, 25);
+	if(strlen(logStr)){
+		strcpy(logStrPrevious, logStrCurrent);
+		strcpy(logStr, logStrCurrent);
+		strclr(logStr);
+	}
+	VDP_clearTextArea(8, 25, 18, 2);
+	VDP_drawText(logStrCurrent, 8, 25);
+	VDP_setTextPalette(PAL1);
+	VDP_drawText(logStrPrevious, 8, 24);
+	VDP_setTextPalette(PAL0);
 }
 
 void updateUi(){
