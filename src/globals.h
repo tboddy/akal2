@@ -74,7 +74,7 @@ u16 simpleRandom(u16 max) {
 	return random() % max;
 }
 
-u16 rollDice(){
+u8 rollDice(){
 	return (random() % 6) + 1;
 }
 
@@ -85,7 +85,7 @@ s16 cameraX, cameraY;
 struct playerStruct {
 	Vect2D_s16 pos, tilePos;
 	Sprite* image;
-	u8 hp, atk, def, wpn, arm, maxHp;
+	s8 hp, atk, def, wpn, arm, maxHp;
 };
 struct playerStruct player;
 
@@ -93,17 +93,20 @@ struct playerStruct player;
 #define ENEMY_COUNT 8
 u8 enemyCount;
 struct enemyStruct {
-	bool seen;
+	bool seen, wasJustHit;
 	Vect2D_s16 pos, tilePos,
 		lastPos;
 	Sprite* image;
-	u8 hp, atk, def, wpn, arm, maxHp, lastDirection, type, moveCounter;
+	s8 hp, atk, def, wpn, arm, maxHp;
+	u8 lastDirection, type, moveCounter;
 };
 struct enemyStruct enemies[ENEMY_COUNT];
 void spawnEnemies();
 void updateEnemies();
 void bounceEnemies();
 void clearEnemies();
+void killEnemy(u8 i);
+void attackPlayerAgainstEnemy(u8 i);
 s16 bounceOffset;
 
 // items
@@ -145,4 +148,4 @@ bool isWalkable(s16 tileX, s16 tileY){
 }
 
 // log
-char logStr[18];
+char logStr[24];

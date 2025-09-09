@@ -85,7 +85,7 @@ char logStrPrevious[18];
 static void updateLog(){
 	if(strlen(logStr)){
 		strcpy(logStrPrevious, logStrCurrent);
-		strcpy(logStr, logStrCurrent);
+		strcpy(logStrCurrent, logStr);
 		strclr(logStr);
 	}
 	VDP_clearTextArea(8, 24, 18, 2);
@@ -108,6 +108,8 @@ bool levelUpSelecting;
 
 void updateLevelTransition(){
 	if(levelTransitionClock == LEVEL_TRANSITION_LIMIT){
+		strcpy(logStrPrevious, "");
+		strcpy(logStrCurrent, "");
 		VDP_clearTileMapRect(BG_A, 8, 2, 24, 24);
 		levelUpSelector = 0;
 		levelUpSelecting = TRUE;

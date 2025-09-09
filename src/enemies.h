@@ -21,16 +21,16 @@ static void spawnEnemy(u8 i, s16 spawnX, s16 spawnY){
 	enemies[i].lastDirection = 0; // Initialize direction
 	enemies[i].moveCounter = 0; // Initialize move counter
 
-
 	if(i % 2 == 0){
 		// moon rabbit
 		enemies[i].type = TYPE_MOONRABBIT;
-		enemies[i].hp = 3;
 		enemies[i].image = SPR_addSprite(&moonRabbitSprite, enemies[i].pos.x - cameraX, enemies[i].pos.y - cameraY + bounceOffset, TILE_ATTR(PAL0, 0, 0, 0));
+		enemies[i].hp = 10;
 	} else {
 		// eye
 		enemies[i].type = TYPE_EYE;
 		enemies[i].image = SPR_addSprite(&eyeSprite, enemies[i].pos.x - cameraX, enemies[i].pos.y - cameraY + bounceOffset, TILE_ATTR(PAL0, 0, 0, 0));
+		enemies[i].hp = 2;
 	}
 
 	SPR_setAnim(enemies[i].image, random() % 3);
@@ -75,6 +75,19 @@ void spawnEnemies(){
 			spawnEnemy(i, (MAP_WIDTH/2) * LOGICAL_TILE_SIZE, (MAP_HEIGHT/2) * LOGICAL_TILE_SIZE);
 		}
 	}
+}
+
+static void lookEnemy(u8 i){
+	if(enemies[i].pos.x < enemies[i].lastPos.x)
+		SPR_setFrame(enemies[i].image, 2);
+	else if(enemies[i].pos.x > enemies[i].lastPos.x)
+		SPR_setFrame(enemies[i].image, 3);
+	else if(enemies[i].pos.y < enemies[i].lastPos.y)
+		SPR_setFrame(enemies[i].image, 1);
+	else if(enemies[i].pos.y > enemies[i].lastPos.y)
+		SPR_setFrame(enemies[i].image, 0);
+	enemies[i].lastPos.x = enemies[i].pos.x;
+	enemies[i].lastPos.y = enemies[i].pos.y;
 }
 
 static void pathfindEnemy(u8 i){
@@ -141,6 +154,7 @@ static void pathfindEnemy(u8 i){
 	   isWalkable(newGridX, newGridY)) {
 		enemies[i].pos.x = newGridX * LOGICAL_TILE_SIZE;
 		enemies[i].pos.y = newGridY * LOGICAL_TILE_SIZE;
+		lookEnemy(i);
 	}
 }
 
@@ -149,24 +163,16 @@ static void wanderEnemy(u8 i){
 	u16 currentY = enemies[i].tilePos.y;
 	u16 newX = currentX;
 	u16 newY = currentY;
-	
-	// Check available directions (0=down, 1=up, 2=left, 3=right)
 	bool canMoveDown = isWalkable(currentX, currentY + 1);
 	bool canMoveUp = isWalkable(currentX, currentY - 1);
 	bool canMoveLeft = isWalkable(currentX - 1, currentY);
 	bool canMoveRight = isWalkable(currentX + 1, currentY);
-	
-	// Count available directions
 	u8 availableDirections = 0;
 	if(canMoveDown) availableDirections++;
 	if(canMoveUp) availableDirections++;
 	if(canMoveLeft) availableDirections++;
 	if(canMoveRight) availableDirections++;
-	
-	// If no directions available, don't move
 	if(availableDirections == 0) return;
-	
-	// If only one direction available, take it (dead end)
 	if(availableDirections == 1) {
 		if(canMoveDown) {
 			newY = currentY + 1;
@@ -183,17 +189,11 @@ static void wanderEnemy(u8 i){
 		}
 		enemies[i].moveCounter = 0; // Reset counter when forced to change direction
 	} else {
-		// Multiple directions available - use wander logic with persistence
 		bool shouldChangeDirection = false;
-		
-		// Check if we should consider changing direction
-		// Change direction if moveCounter reaches a threshold (3-6 moves)
 		u8 persistenceThreshold = 3 + simpleRandom(4); // 3-6 moves
 		if(enemies[i].moveCounter >= persistenceThreshold) {
 			shouldChangeDirection = true;
 		}
-		
-		// Try to continue in same direction if we haven't reached threshold
 		if(!shouldChangeDirection) {
 			bool canContinue = false;
 			switch(enemies[i].lastDirection) {
@@ -222,32 +222,20 @@ static void wanderEnemy(u8 i){
 					}
 					break;
 			}
-			
-			// If can continue in same direction, do it and increment counter
 			if(canContinue) {
 				enemies[i].moveCounter++;
 			} else {
-				// Can't continue, must change direction
 				shouldChangeDirection = true;
 			}
 		}
-		
-		// Change direction if needed
 		if(shouldChangeDirection) {
-			// Create an array of available directions and randomly select one
 			u8 availableDirs[4];
 			u8 dirCount = 0;
-			
-			// Build array of available directions
 			if(canMoveDown) availableDirs[dirCount++] = 0; // Down
 			if(canMoveUp) availableDirs[dirCount++] = 1;   // Up
 			if(canMoveLeft) availableDirs[dirCount++] = 2; // Left
 			if(canMoveRight) availableDirs[dirCount++] = 3; // Right
-			
-			// Randomly select one of the available directions
 			u8 selectedDir = availableDirs[simpleRandom(dirCount)];
-			
-			// Apply the selected direction
 			switch(selectedDir) {
 				case 0: // Down
 					newY = currentY + 1;
@@ -269,50 +257,54 @@ static void wanderEnemy(u8 i){
 			enemies[i].moveCounter = 0; // Reset counter when changing direction
 		}
 	}
-	
-	// Move the enemy if the new position is valid and not occupied by player
-	// Ensure only cardinal movement (only one coordinate can change at a time)
 	bool isCardinalMove = ((newX != currentX) && (newY == currentY)) || 
 	                      ((newX == currentX) && (newY != currentY));
-	
 	if(isCardinalMove && 
 	   (newX != player.tilePos.x || newY != player.tilePos.y) &&
 	   isWalkable(newX, newY)) {
 		enemies[i].pos.x = newX * LOGICAL_TILE_SIZE;
 		enemies[i].pos.y = newY * LOGICAL_TILE_SIZE;
+		lookEnemy(i);
 	}
 }
 
-static void lookEnemy(u8 i){
-	if(enemies[i].pos.x < enemies[i].lastPos.x)
-		SPR_setFrame(enemies[i].image, 2);
-	else if(enemies[i].pos.x > enemies[i].lastPos.x)
-		SPR_setFrame(enemies[i].image, 3);
-	else if(enemies[i].pos.y < enemies[i].lastPos.y)
-		SPR_setFrame(enemies[i].image, 1);
-	else if(enemies[i].pos.y > enemies[i].lastPos.y)
-		SPR_setFrame(enemies[i].image, 0);
-	enemies[i].lastPos.x = enemies[i].pos.x;
-	enemies[i].lastPos.y = enemies[i].pos.y;
+static void enemyAttackPlayer(u8 i){
+	if(
+	(enemies[i].tilePos.x == player.tilePos.x - 1 && enemies[i].tilePos.y == player.tilePos.y) || // enemy to left of player
+		(enemies[i].tilePos.x == player.tilePos.x + 1 && enemies[i].tilePos.y == player.tilePos.y) || // enemy to right of player
+		(enemies[i].tilePos.x == player.tilePos.x  && enemies[i].tilePos.y == player.tilePos.y - 1) || // enemy to top of player
+		(enemies[i].tilePos.x == player.tilePos.x && enemies[i].tilePos.y == player.tilePos.y + 1) // enemy to bottom of player
+		){
+		if(player.hp > 0){
+			player.hp--;
+		}
+	}
 }
 
 static void updateEnemy(u8 i){
 	if(enemies[i].type == TYPE_MOONRABBIT){
-		if(currentTurn % 2 == 0) pathfindEnemy(i);
-		lookEnemy(i);
+		if(currentTurn % 4 == 0){
+			if(enemies[i].wasJustHit) enemies[i].wasJustHit = FALSE;
+			else pathfindEnemy(i);
+		}
 	} else if(enemies[i].type == TYPE_EYE){
-		wanderEnemy(i);
-		lookEnemy(i);
+		if(currentTurn % 2 == 0){
+			if(enemies[i].wasJustHit) enemies[i].wasJustHit = FALSE;
+			else wanderEnemy(i);
+		}
 	}
+	enemies[i].tilePos.x = enemies[i].pos.x / LOGICAL_TILE_SIZE;
+	enemies[i].tilePos.y = enemies[i].pos.y / LOGICAL_TILE_SIZE;
+	enemyAttackPlayer(i);
 }
 
 void updateEnemies(){
 	for(int i = 0; i < ENEMY_COUNT; i++) {
-		if(enemies[i].seen) updateEnemy(i);
-		checkEnemyVisibility(i);
-		enemies[i].tilePos.x = enemies[i].pos.x / LOGICAL_TILE_SIZE;
-		enemies[i].tilePos.y = enemies[i].pos.y / LOGICAL_TILE_SIZE;
-		SPR_setPosition(enemies[i].image, enemies[i].pos.x - cameraX, enemies[i].pos.y - cameraY + (i % 4 < 2 ? bounceOffset : -bounceOffset));
+		if(enemies[i].hp > 0){
+			if(enemies[i].seen) updateEnemy(i);
+			checkEnemyVisibility(i);
+			SPR_setPosition(enemies[i].image, enemies[i].pos.x - cameraX, enemies[i].pos.y - cameraY + (i % 4 < 2 ? bounceOffset : -bounceOffset));
+		}
 	}
 }
 
@@ -320,13 +312,42 @@ void bounceEnemies(){
 	if(clock % 32 == 0){
 		bounceOffset = bounceOffset == 1 ? -1 : 1;
 		for(int i = 0; i < ENEMY_COUNT; i++) {
-			SPR_setPosition(enemies[i].image, enemies[i].pos.x - cameraX, enemies[i].pos.y - cameraY + (i % 4 < 2 ? bounceOffset : -bounceOffset));
+			if(enemies[i].hp > 0) SPR_setPosition(enemies[i].image, enemies[i].pos.x - cameraX, enemies[i].pos.y - cameraY + (i % 4 < 2 ? bounceOffset : -bounceOffset));
 		}
 	}
 }
 
 void clearEnemies(){
 	for(int i = 0; i < ENEMY_COUNT; i++) {
-		SPR_releaseSprite(enemies[i].image);
+		if(enemies[i].hp > 0) SPR_releaseSprite(enemies[i].image);
+	}
+}
+
+void killEnemy(u8 i){
+	SPR_releaseSprite(enemies[i].image);
+}
+
+u8 hitEnemyAmount;
+char hitEnemyAmountStr[2];
+void attackPlayerAgainstEnemy(u8 i){
+	enemies[i].wasJustHit = TRUE;
+	hitEnemyAmount = rollDice() + player.atk + player.wpn;
+	enemies[i].hp -= hitEnemyAmount;
+	if(enemies[i].hp <= 0){
+		killEnemy(i);
+		if(enemies[i].type == TYPE_MOONRABBIT){
+			strcpy(logStr, "KILLED RABBIT");
+		} else if(enemies[i].type == TYPE_EYE){
+			strcpy(logStr, "KILLED EYE");
+		}
+	} else {
+		intToStr(hitEnemyAmount, hitEnemyAmountStr, hitEnemyAmount < 10 ? 1 : 2);
+		if(enemies[i].type == TYPE_MOONRABBIT){
+			strcpy(logStr, "HIT RABBIT");
+		} else if(enemies[i].type == TYPE_EYE){
+			strcpy(logStr, "HIT EYE");
+		}
+		strcat(logStr, " FOR ");
+		strcat(logStr, hitEnemyAmountStr);
 	}
 }
