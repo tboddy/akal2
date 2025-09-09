@@ -83,14 +83,16 @@ u16 clock;
 // player
 s16 cameraX, cameraY;
 struct playerStruct {
-	Vect2D_s16 pos, tilePos;
+	Vect2D_s16 pos, tilePos, lastPos;
 	Sprite* image;
 	s8 hp, atk, def, wpn, arm, maxHp;
+	u8 currentItem;
 };
 struct playerStruct player;
+void killPlayer();
 
 // enemies
-#define ENEMY_COUNT 8
+#define ENEMY_COUNT 10
 u8 enemyCount;
 struct enemyStruct {
 	bool seen, wasJustHit;
@@ -102,7 +104,7 @@ struct enemyStruct {
 };
 struct enemyStruct enemies[ENEMY_COUNT];
 void spawnEnemies();
-void updateEnemies();
+void updateEnemies(bool canAttack);
 void bounceEnemies();
 void clearEnemies();
 void killEnemy(u8 i);

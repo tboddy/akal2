@@ -26,11 +26,19 @@ static void spawnEnemy(u8 i, s16 spawnX, s16 spawnY){
 		enemies[i].type = TYPE_MOONRABBIT;
 		enemies[i].image = SPR_addSprite(&moonRabbitSprite, enemies[i].pos.x - cameraX, enemies[i].pos.y - cameraY + bounceOffset, TILE_ATTR(PAL0, 0, 0, 0));
 		enemies[i].hp = 10;
+		enemies[i].atk = 1;
+		enemies[i].def = 0;
+		enemies[i].wpn = 2;
+		enemies[i].arm = 0;
 	} else {
 		// eye
 		enemies[i].type = TYPE_EYE;
 		enemies[i].image = SPR_addSprite(&eyeSprite, enemies[i].pos.x - cameraX, enemies[i].pos.y - cameraY + bounceOffset, TILE_ATTR(PAL0, 0, 0, 0));
 		enemies[i].hp = 2;
+		enemies[i].atk = 0;
+		enemies[i].def = 0;
+		enemies[i].wpn = 1;
+		enemies[i].arm = 0;
 	}
 
 	SPR_setAnim(enemies[i].image, random() % 3);
@@ -268,15 +276,24 @@ static void wanderEnemy(u8 i){
 	}
 }
 
+u8 hitPlayerAmount;
+char hitPlayerAmountStr[2];
 static void enemyAttackPlayer(u8 i){
-	if(
-	(enemies[i].tilePos.x == player.tilePos.x - 1 && enemies[i].tilePos.y == player.tilePos.y) || // enemy to left of player
-		(enemies[i].tilePos.x == player.tilePos.x + 1 && enemies[i].tilePos.y == player.tilePos.y) || // enemy to right of player
-		(enemies[i].tilePos.x == player.tilePos.x  && enemies[i].tilePos.y == player.tilePos.y - 1) || // enemy to top of player
-		(enemies[i].tilePos.x == player.tilePos.x && enemies[i].tilePos.y == player.tilePos.y + 1) // enemy to bottom of player
-		){
-		if(player.hp > 0){
-			player.hp--;
+	if(player.pos.x == player.lastPos.x && player.pos.y == player.lastPos.y){
+		if((enemies[i].tilePos.x == player.tilePos.x - 1 && enemies[i].tilePos.y == player.tilePos.y) || // enemy to left of player
+			(enemies[i].tilePos.x == player.tilePos.x + 1 && enemies[i].tilePos.y == player.tilePos.y) || // enemy to right of player
+			(enemies[i].tilePos.x == player.tilePos.x  && enemies[i].tilePos.y == player.tilePos.y - 1) || // enemy to top of player
+			(enemies[i].tilePos.x == player.tilePos.x && enemies[i].tilePos.y == player.tilePos.y + 1) // enemy to bottom of player
+			){
+			hitPlayerAmount = rollDice() + enemies[i].atk + enemies[i].wpn;
+			player.hp -= hitPlayerAmount;
+			if(player.hp <= 0){
+				killPlayer();
+			} else {
+				intToStr(hitPlayerAmount, hitPlayerAmountStr, hitPlayerAmount < 10 ? 1 : 2);
+				strcpy(logStr, "HIT PLAYER FOR ");
+				strcat(logStr, hitPlayerAmountStr);
+			}
 		}
 	}
 }
@@ -295,15 +312,18 @@ static void updateEnemy(u8 i){
 	}
 	enemies[i].tilePos.x = enemies[i].pos.x / LOGICAL_TILE_SIZE;
 	enemies[i].tilePos.y = enemies[i].pos.y / LOGICAL_TILE_SIZE;
-	enemyAttackPlayer(i);
 }
 
-void updateEnemies(){
+void updateEnemies(bool canAttack){
 	for(int i = 0; i < ENEMY_COUNT; i++) {
 		if(enemies[i].hp > 0){
-			if(enemies[i].seen) updateEnemy(i);
-			checkEnemyVisibility(i);
-			SPR_setPosition(enemies[i].image, enemies[i].pos.x - cameraX, enemies[i].pos.y - cameraY + (i % 4 < 2 ? bounceOffset : -bounceOffset));
+			if(canAttack){
+				if(enemies[i].seen) enemyAttackPlayer(i);
+			} else {
+				if(enemies[i].seen) updateEnemy(i);
+				checkEnemyVisibility(i);
+				SPR_setPosition(enemies[i].image, enemies[i].pos.x - cameraX, enemies[i].pos.y - cameraY + (i % 4 < 2 ? bounceOffset : -bounceOffset));
+			}
 		}
 	}
 }

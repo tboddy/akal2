@@ -1,5 +1,5 @@
-u16 moveClock, attackClock;
-bool isMoving, isAttacking;
+u16 turnClock;
+bool isTurning;
 
 void loadPlayer(){
 	player.image = SPR_addSprite(&playerSprite, 0, 0, TILE_ATTR(PAL0, 0, 0, 0));
@@ -9,35 +9,63 @@ void loadPlayer(){
 	player.def = 0;
 	player.wpn = 2;
 	player.arm = 0;
-	moveClock = 0;
-	attackClock = 0;
+	player.currentItem = 0;
+	turnClock = 0;
 }
 
 Vect2D_s16 newPlayerTile;
-bool playerCanMove, playerCanAttack;
+bool playerCanMove, playerDidAttack, playerTriedAttack;
 u8 playerFrame;
+
+u8 attackingEnemy;
+
+static void checkPlayerAttackCollision(bool firstTime){
+	if(playerTriedAttack){
+		for(int i = 0; i < ENEMY_COUNT; i++) {
+			if(firstTime) enemies[i].wasJustHit = FALSE;
+			if(enemies[i].hp > 0 && !enemies[i].wasJustHit && (
+				(enemies[i].tilePos.x == newPlayerTile.x - 1 && enemies[i].tilePos.y == newPlayerTile.y && playerFrame == 2) || // enemy to left of player
+				(enemies[i].tilePos.x == newPlayerTile.x + 1 && enemies[i].tilePos.y == newPlayerTile.y && playerFrame == 3) || // enemy to right of player
+				(enemies[i].tilePos.x == newPlayerTile.x  && enemies[i].tilePos.y == newPlayerTile.y - 1 && playerFrame == 1) || // enemy to top of player
+				(enemies[i].tilePos.x == newPlayerTile.x && enemies[i].tilePos.y == newPlayerTile.y + 1 && playerFrame == 0) // enemy to bottom of player
+				)){
+				attackPlayerAgainstEnemy(i);
+				playerDidAttack = TRUE;
+			}
+		}
+		if(!playerDidAttack) strcpy(logStr, "HIT NOTHING");
+	}
+}
 
 static void changeTurnFromPlayer(){
 	currentTurn++;
 	if(mapData[newPlayerTile.y][newPlayerTile.x] == TILE_STAIRWELL){
 		levelTransitionClock = LEVEL_TRANSITION_LIMIT;
 	} else {
-		if(playerCanMove || playerCanAttack){
+		if(playerCanMove){
 		  updateVisibilityWithTracking(newPlayerTile.x, newPlayerTile.y);
 		  renderVisibleTilesOnly();
 			updateCamera();
 			SPR_setPosition(player.image, player.pos.x - cameraX, player.pos.y - cameraY);
 		}
 		SPR_setFrame(player.image, playerFrame);
-		updateEnemies();
+		checkPlayerAttackCollision(TRUE);
+		updateEnemies(FALSE);
+		checkPlayerAttackCollision(FALSE);
+		updateEnemies(TRUE);
 		updateUi();
+		player.lastPos.x = player.pos.x;
+		player.lastPos.y = player.pos.y;
 	}
 }
 
-void movePlayer(){
-	isMoving = TRUE;
+static void forcePlayerPosition(){
 	newPlayerTile.x = player.pos.x >> 4;
 	newPlayerTile.y = player.pos.y >> 4;
+}
+
+void movePlayer(){
+	forcePlayerPosition();
 	playerCanMove = FALSE;
 	if(ctrl.left){
 		newPlayerTile.x--;
@@ -65,41 +93,50 @@ void movePlayer(){
 		player.tilePos.y = newPlayerTile.y;
 	}
 	changeTurnFromPlayer();
-	isMoving = FALSE;
 }
 
-bool playerDidAttack;
-void attackPlayer(){
-	isAttacking = TRUE;
-	newPlayerTile.x = player.pos.x >> 4;
-	newPlayerTile.y = player.pos.y >> 4;
-	playerCanAttack = FALSE;
+static void attackPlayer(){
+	forcePlayerPosition();
 	playerDidAttack = FALSE;
-	for(int i = 0; i < ENEMY_COUNT; i++) {
-		enemies[i].wasJustHit = FALSE;
-		if(enemies[i].hp > 0 && (
-			(enemies[i].tilePos.x == newPlayerTile.x - 1 && enemies[i].tilePos.y == newPlayerTile.y && playerFrame == 2) || // enemy to left of player
-			(enemies[i].tilePos.x == newPlayerTile.x + 1 && enemies[i].tilePos.y == newPlayerTile.y && playerFrame == 3) || // enemy to right of player
-			(enemies[i].tilePos.x == newPlayerTile.x  && enemies[i].tilePos.y == newPlayerTile.y - 1 && playerFrame == 1) || // enemy to top of player
-			(enemies[i].tilePos.x == newPlayerTile.x && enemies[i].tilePos.y == newPlayerTile.y + 1 && playerFrame == 0) // enemy to bottom of player
-			)){
-			attackPlayerAgainstEnemy(i);
-			playerDidAttack = TRUE;
-		}
-	}
-	if(!playerDidAttack) strcpy(logStr, "HIT NOTHING");
+	playerTriedAttack = TRUE;
 	changeTurnFromPlayer();
-	isAttacking = FALSE;
+}
+
+static void healPlayer(){
+	forcePlayerPosition();
+	player.hp += 4;
+	if(player.hp > player.maxHp) player.hp = player.maxHp;
+	changeTurnFromPlayer();
+}
+
+static void changePlayerItem(){
+	// forcePlayerPosition();
+	player.currentItem++;
+	if(player.currentItem > 3) player.currentItem = 0;
+	updateUi();
+	// changeTurnFromPlayer();
+	// VDP_clearText(8, 3, 4);
 }
 
 void updatePlayer(){
-	if(moveClock == 0 && (ctrl.left || ctrl.right || ctrl.up || ctrl.down) && !isMoving){
-		movePlayer();
-		moveClock = 8;
-	} else if(attackClock == 0 && (ctrl.a) && !isAttacking){
-		attackPlayer();
-		attackClock = 32;
+	if(!isTurning && turnClock == 0 && (ctrl.left || ctrl.right || ctrl.up || ctrl.down || ctrl.a || ctrl.b)){
+		playerTriedAttack = FALSE;
+		if((ctrl.left || ctrl.right || ctrl.up || ctrl.down)) movePlayer();
+		else if(ctrl.a){
+			if(player.currentItem < 2)
+				attackPlayer();
+			else
+				healPlayer();
+		} else if(ctrl.b){
+			changePlayerItem();
+		}
+		turnClock = 12;
 	}
-	if(moveClock > 0) moveClock--;
-	if(attackClock > 0) attackClock--;
+	if(turnClock > 0) turnClock--;
+}
+
+void killPlayer(){
+	// SYS_hardReset();
+	player.hp = 0;
+	// strcpy(logStr, "KILLED PLAYER");
 }

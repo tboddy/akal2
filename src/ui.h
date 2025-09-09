@@ -22,8 +22,13 @@ void drawFrame(){
   VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL1, 1, 0, 0, FRAME_INDEX + 7), 7 + 25, 1 + 25);
 }
 
+s8 lastHp, lastMaxHp;
+u8 lastCurrentItem;
 
 void loadUi(){
+	lastHp = 99;
+	lastMaxHp = 99;
+	lastCurrentItem = 99;
 	drawFrame();
 }
 
@@ -39,14 +44,20 @@ char defStr[2];
 char wpnStr[2];
 char armStr[2];
 
+
 static void updateStats(){
 	// hp
-	VDP_drawText("hp", 8, 2);
-	intToStr(player.hp, hpStr, lessTen(player.hp));
-	VDP_drawText(hpStr, 11, 2);
-	VDP_drawText("/", 11 + lessTen(player.hp), 2);
-	intToStr(player.maxHp, maxHpStr, 2);
-	VDP_drawText(maxHpStr, 12 + lessTen(player.hp), 2);
+	if(lastHp != player.hp || lastMaxHp != player.maxHp){
+		VDP_clearText(11, 2, 5);
+		VDP_drawText("hp", 8, 2);
+		intToStr(player.hp, hpStr, lessTen(player.hp));
+		VDP_drawText(hpStr, 11, 2);
+		VDP_drawText("/", 11 + lessTen(player.hp), 2);
+		intToStr(player.maxHp, maxHpStr, 2);
+		VDP_drawText(maxHpStr, 12 + lessTen(player.hp), 2);
+		lastHp = player.hp;
+		lastMaxHp = player.maxHp;
+	}
 
 	// other stats
 
@@ -58,10 +69,26 @@ static void updateStats(){
 	intToStr(player.def, defStr, lessTen(player.def));
 	VDP_drawText(defStr, 30 + (player.def < 10 ? 1 : 0), 2);
 
-	VDP_drawText("pestle+2", 8, 3);
-
-	for(u8 i = 0; i < 4; i++){
-		VDP_drawText(i == 0 ? "@" : "`", 8 + i, 4);
+	if(lastCurrentItem != player.currentItem){
+		VDP_clearText(8, 4, 8);
+		switch(player.currentItem){
+			case 0:
+				VDP_drawText("staff+2", 8, 4);
+				break;
+			case 1:
+				VDP_drawText("bow+2", 8, 4);
+				break;
+			case 2:
+				VDP_drawText("potion", 8, 4);
+				break;
+			case 3:
+				VDP_drawText("potion", 8, 4);
+				break;
+		}
+		for(u8 i = 0; i < 4; i++){
+			VDP_drawText(i == player.currentItem ? "@" : "`", 8 + i, 3);
+		}
+		lastCurrentItem = player.currentItem;
 	}
 
 	VDP_drawText("plate+2", 25, 3);
