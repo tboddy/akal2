@@ -31,6 +31,7 @@ void updateVisibilityWithTracking(s16 playerX, s16 playerY);
 void renderVisibleTilesOnly();
 void transitionToNextLevel();
 void updateUi();
+void addLogEntry(const char* message);
 
 char debugStrOne[2];
 char debugStrTwo[2];
@@ -151,4 +152,8 @@ bool isWalkable(s16 tileX, s16 tileY){
 }
 
 // log
-char logStr[24];
+#define MAX_LOG_ENTRIES 4
+#define LOG_ENTRY_LENGTH 24
+char logQueue[MAX_LOG_ENTRIES][LOG_ENTRY_LENGTH];
+u8 logQueueCount;
+u8 logQueueIndex;

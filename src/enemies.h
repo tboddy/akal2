@@ -277,7 +277,8 @@ static void wanderEnemy(u8 i){
 }
 
 s8 hitPlayerAmount;
-char hitPlayerAmountStr[2];
+char hitPlayerAmountStr[4];
+char tempLogStr[24];
 static void enemyAttackPlayer(u8 i){
 	if(player.pos.x == player.lastPos.x && player.pos.y == player.lastPos.y){
 		if((enemies[i].tilePos.x == player.tilePos.x - 1 && enemies[i].tilePos.y == player.tilePos.y) || // enemy to left of player
@@ -291,9 +292,10 @@ static void enemyAttackPlayer(u8 i){
 			if(player.hp <= 0){
 				killPlayer();
 			} else {
-				intToStr(hitPlayerAmount, hitPlayerAmountStr, hitPlayerAmount < 10 ? 1 : 2);
-				strcpy(logStr, "HIT PLAYER FOR ");
-				strcat(logStr, hitPlayerAmountStr);
+				intToStr(hitPlayerAmount, hitPlayerAmountStr, hitPlayerAmount < 10 ? 1 : (hitPlayerAmount < 100 ? 2 : 3));
+				strcpy(tempLogStr, "HIT PLAYER FOR ");
+				strcat(tempLogStr, hitPlayerAmountStr);
+				addLogEntry(tempLogStr);
 			}
 		}
 	}
@@ -348,8 +350,8 @@ void killEnemy(u8 i){
 	SPR_releaseSprite(enemies[i].image);
 }
 
-u8 hitEnemyAmount;
-char hitEnemyAmountStr[2];
+s8 hitEnemyAmount;
+char hitEnemyAmountStr[4];
 void attackPlayerAgainstEnemy(u8 i){
 	enemies[i].wasJustHit = TRUE;
 	hitEnemyAmount = (rollDice() + player.atk + player.wpn) - (rollDice() + enemies[i].def + enemies[i].arm);
@@ -358,18 +360,18 @@ void attackPlayerAgainstEnemy(u8 i){
 	if(enemies[i].hp <= 0){
 		killEnemy(i);
 		if(enemies[i].type == TYPE_MOONRABBIT){
-			strcpy(logStr, "KILLED RABBIT");
+			addLogEntry("KILLED RABBIT");
 		} else if(enemies[i].type == TYPE_EYE){
-			strcpy(logStr, "KILLED EYE");
+			addLogEntry("KILLED EYE");
 		}
 	} else {
-		intToStr(hitEnemyAmount, hitEnemyAmountStr, hitEnemyAmount < 10 ? 1 : 2);
+		intToStr(hitEnemyAmount, hitEnemyAmountStr, hitEnemyAmount < 10 ? 1 : (hitEnemyAmount < 100 ? 2 : 3));
 		if(enemies[i].type == TYPE_MOONRABBIT){
-			strcpy(logStr, "HIT RABBIT");
+			strcpy(tempLogStr, "HIT RABBIT FOR ");
 		} else if(enemies[i].type == TYPE_EYE){
-			strcpy(logStr, "HIT EYE");
+			strcpy(tempLogStr, "HIT EYE FOR ");
 		}
-		strcat(logStr, " FOR ");
-		strcat(logStr, hitEnemyAmountStr);
+		strcat(tempLogStr, hitEnemyAmountStr);
+		addLogEntry(tempLogStr);
 	}
 }

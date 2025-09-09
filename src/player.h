@@ -33,7 +33,7 @@ static void checkPlayerAttackCollision(bool firstTime){
 				playerDidAttack = TRUE;
 			}
 		}
-		if(!playerDidAttack) strcpy(logStr, "HIT NOTHING");
+		if(!playerDidAttack) addLogEntry("HIT NOTHING");
 	}
 }
 

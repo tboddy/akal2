@@ -107,19 +107,51 @@ static void updateStats(){
 	// VDP_drawText(armStr, SIDEBAR_X + strLessTen(player.arm), SIDEBAR_Y + 7);
 }
 
-char logStrCurrent[18];
-char logStrPrevious[18];
-static void updateLog(){
-	if(strlen(logStr)){
-		strcpy(logStrPrevious, logStrCurrent);
-		strcpy(logStrCurrent, logStr);
-		strclr(logStr);
+// Function to add a new log entry
+void addLogEntry(const char* message) {
+	char turnStr[4];
+	char formattedMessage[LOG_ENTRY_LENGTH];
+	
+	// Convert turn number to string
+	intToStr(currentTurn, turnStr, currentTurn < 10 ? 1 : (currentTurn < 100 ? 2 : 3));
+	
+	// Format message with turn number
+	strcpy(formattedMessage, turnStr);
+	strcat(formattedMessage, "-");
+	strcat(formattedMessage, message);
+	
+	if(logQueueCount < MAX_LOG_ENTRIES) {
+		strcpy(logQueue[logQueueCount], formattedMessage);
+		logQueueCount++;
+	} else {
+		// Shift all entries up, remove oldest
+		for(u8 i = 0; i < MAX_LOG_ENTRIES - 1; i++) {
+			strcpy(logQueue[i], logQueue[i + 1]);
+		}
+		strcpy(logQueue[MAX_LOG_ENTRIES - 1], formattedMessage);
 	}
-	VDP_clearTextArea(8, 24, 18, 2);
-	VDP_drawText(logStrCurrent, 8, 25);
-	VDP_setTextPalette(PAL1);
-	VDP_drawText(logStrPrevious, 8, 24);
-	VDP_setTextPalette(PAL0);
+}
+
+static void updateLog(){
+	VDP_clearTextArea(8, 23, 18, 3);
+	
+	// Display the most recent entries (up to 3)
+	if(logQueueCount > 0) {
+		u8 displayIndex = logQueueCount - 1;
+		VDP_drawText(logQueue[displayIndex], 8, 25); // Most recent (bottom line)
+		
+		if(logQueueCount > 1) {
+			VDP_setTextPalette(PAL1);
+			VDP_drawText(logQueue[displayIndex - 1], 8, 24); // Second most recent (middle line)
+			VDP_setTextPalette(PAL0);
+		}
+		
+		if(logQueueCount > 2) {
+			VDP_setTextPalette(PAL1);
+			VDP_drawText(logQueue[displayIndex - 2], 8, 23); // Third most recent (top line)
+			VDP_setTextPalette(PAL0);
+		}
+	}
 }
 
 void updateUi(){
@@ -135,8 +167,11 @@ bool levelUpSelecting;
 
 void updateLevelTransition(){
 	if(levelTransitionClock == LEVEL_TRANSITION_LIMIT){
-		strcpy(logStrPrevious, "");
-		strcpy(logStrCurrent, "");
+		// Clear log queue
+		logQueueCount = 0;
+		for(u8 i = 0; i < MAX_LOG_ENTRIES; i++) {
+			strclr(logQueue[i]);
+		}
 		VDP_clearTileMapRect(BG_A, 8, 2, 24, 24);
 		levelUpSelector = 0;
 		levelUpSelecting = TRUE;
