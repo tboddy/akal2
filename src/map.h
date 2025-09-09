@@ -167,10 +167,10 @@ static void initVisibility(){
 
 void renderTile(u16 x, u16 y) {
 	if(visibilityMap[y][x] == 0) {
-		VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL2, 0, FALSE, FALSE, TILE_USER_INDEX + 0), x*2, y*2);
-		VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL2, 0, FALSE, FALSE, TILE_USER_INDEX + 1), x*2 + 1, y*2);
-		VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL2, 0, FALSE, FALSE, TILE_USER_INDEX + 14), x*2, y*2 + 1);
-		VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL2, 0, FALSE, FALSE, TILE_USER_INDEX + 15), x*2 + 1, y*2 + 1);
+		VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL2, 1, FALSE, FALSE, TILE_USER_INDEX + 0), x*2, y*2);
+		VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL2, 1, FALSE, FALSE, TILE_USER_INDEX + 1), x*2 + 1, y*2);
+		VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL2, 1, FALSE, FALSE, TILE_USER_INDEX + 14), x*2, y*2 + 1);
+		VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL2, 1, FALSE, FALSE, TILE_USER_INDEX + 15), x*2 + 1, y*2 + 1);
 	} else if(visibilityMap[y][x] == 1) {
 		if(mapData[y][x] == TILE_FLOOR) {
 			bool hasWallAbove = (y > 0 && mapData[y-1][x] == TILE_WALL);

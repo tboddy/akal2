@@ -103,6 +103,7 @@ struct enemyStruct enemies[ENEMY_COUNT];
 void spawnEnemies();
 void updateEnemies();
 void bounceEnemies();
+void clearEnemies();
 s16 bounceOffset;
 
 // items
@@ -126,13 +127,21 @@ struct itemStruct items[ITEM_COUNT];
 #define ITEM_TYPE_PLATE 10
 // utility
 bool isWalkable(s16 tileX, s16 tileY){
-	bool isWalkableCheck = FALSE;
-	if(mapData[tileY][tileX] == TILE_FLOOR && mapData[tileY - 1][tileX] == TILE_FLOOR)
-		isWalkableCheck = TRUE;
-	for(int i = 0; i < ENEMY_COUNT; i++)
-		if(enemies[i].tilePos.x == tileX && enemies[i].tilePos.y == tileY)
-			isWalkableCheck = FALSE;
-	return isWalkableCheck;
+	// Check bounds first
+	if(tileX < 0 || tileX >= MAP_WIDTH || tileY < 0 || tileY >= MAP_HEIGHT)
+		return FALSE;
+	
+	// Check if tile is floor and tile above is also floor (for proper collision)
+	if(mapData[tileY][tileX] == TILE_FLOOR && mapData[tileY - 1][tileX] == TILE_FLOOR) {
+		// Check if any enemy is already at this position
+		for(int i = 0; i < ENEMY_COUNT; i++) {
+			if(enemies[i].tilePos.x == tileX && enemies[i].tilePos.y == tileY) {
+				return FALSE;
+			}
+		}
+		return TRUE;
+	}
+	return FALSE;
 }
 
 // log

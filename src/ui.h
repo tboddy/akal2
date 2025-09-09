@@ -88,7 +88,7 @@ static void updateLog(){
 		strcpy(logStr, logStrCurrent);
 		strclr(logStr);
 	}
-	VDP_clearTextArea(8, 25, 18, 2);
+	VDP_clearTextArea(8, 24, 18, 2);
 	VDP_drawText(logStrCurrent, 8, 25);
 	VDP_setTextPalette(PAL1);
 	VDP_drawText(logStrPrevious, 8, 24);
@@ -113,6 +113,7 @@ void updateLevelTransition(){
 		levelUpSelecting = TRUE;
 		VDP_clearPlane(BG_B, TRUE);
 		SPR_setVisibility(player.image, HIDDEN);
+		clearEnemies();
 		VDP_drawText("LEVEL", TRANSITION_X + 5, TRANSITION_Y);
 		VDP_drawText(levelStr, TRANSITION_X + 5 + 6, TRANSITION_Y);
 		VDP_drawText("COMPLETE", TRANSITION_X + 5 + 6 + (currentLevel < 10 ? 2 : 3), TRANSITION_Y);
