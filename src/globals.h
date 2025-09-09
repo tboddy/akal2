@@ -83,6 +83,7 @@ u16 clock;
 // player
 s16 cameraX, cameraY;
 struct playerStruct {
+	bool justHealed;
 	Vect2D_s16 pos, tilePos, lastPos;
 	Sprite* image;
 	s8 hp, atk, def, wpn, arm, maxHp;

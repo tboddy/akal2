@@ -276,7 +276,7 @@ static void wanderEnemy(u8 i){
 	}
 }
 
-u8 hitPlayerAmount;
+s8 hitPlayerAmount;
 char hitPlayerAmountStr[2];
 static void enemyAttackPlayer(u8 i){
 	if(player.pos.x == player.lastPos.x && player.pos.y == player.lastPos.y){
@@ -285,7 +285,8 @@ static void enemyAttackPlayer(u8 i){
 			(enemies[i].tilePos.x == player.tilePos.x  && enemies[i].tilePos.y == player.tilePos.y - 1) || // enemy to top of player
 			(enemies[i].tilePos.x == player.tilePos.x && enemies[i].tilePos.y == player.tilePos.y + 1) // enemy to bottom of player
 			){
-			hitPlayerAmount = rollDice() + enemies[i].atk + enemies[i].wpn;
+			hitPlayerAmount = (rollDice() + enemies[i].atk + enemies[i].wpn) - (rollDice() + player.def + player.arm);
+			if(hitPlayerAmount < 0) hitPlayerAmount = 0;
 			player.hp -= hitPlayerAmount;
 			if(player.hp <= 0){
 				killPlayer();
@@ -318,7 +319,7 @@ void updateEnemies(bool canAttack){
 	for(int i = 0; i < ENEMY_COUNT; i++) {
 		if(enemies[i].hp > 0){
 			if(canAttack){
-				if(enemies[i].seen) enemyAttackPlayer(i);
+				if(enemies[i].seen && !player.justHealed) enemyAttackPlayer(i);
 			} else {
 				if(enemies[i].seen) updateEnemy(i);
 				checkEnemyVisibility(i);
@@ -351,7 +352,8 @@ u8 hitEnemyAmount;
 char hitEnemyAmountStr[2];
 void attackPlayerAgainstEnemy(u8 i){
 	enemies[i].wasJustHit = TRUE;
-	hitEnemyAmount = rollDice() + player.atk + player.wpn;
+	hitEnemyAmount = (rollDice() + player.atk + player.wpn) - (rollDice() + enemies[i].def + enemies[i].arm);
+	if(hitEnemyAmount < 0) hitEnemyAmount = 0;
 	enemies[i].hp -= hitEnemyAmount;
 	if(enemies[i].hp <= 0){
 		killEnemy(i);

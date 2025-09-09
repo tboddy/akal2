@@ -104,6 +104,7 @@ static void attackPlayer(){
 
 static void healPlayer(){
 	forcePlayerPosition();
+	player.justHealed = TRUE;
 	player.hp += 4;
 	if(player.hp > player.maxHp) player.hp = player.maxHp;
 	changeTurnFromPlayer();
@@ -120,6 +121,7 @@ static void changePlayerItem(){
 
 void updatePlayer(){
 	if(!isTurning && turnClock == 0 && (ctrl.left || ctrl.right || ctrl.up || ctrl.down || ctrl.a || ctrl.b)){
+		player.justHealed = FALSE;
 		playerTriedAttack = FALSE;
 		if((ctrl.left || ctrl.right || ctrl.up || ctrl.down)) movePlayer();
 		else if(ctrl.a){
